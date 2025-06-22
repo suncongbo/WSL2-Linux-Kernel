@@ -13,10 +13,14 @@ jobs:
     name: Build Kernel
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
+      - name: Checkout from Official Microsoft Repo
         uses: actions/checkout@v4
         with:
+          # 直接指定从微软的官方仓库 checkout，而不是从你的fork仓库
+          repository: 'microsoft/WSL2-Linux-Kernel'
+          # 使用你输入的 tag (例如 'linux-msft-wsl-5.4.72')
           ref: ${{ github.event.inputs.tag }}
+          # 只下载最新的 commit，节省时间
           fetch-depth: 1
 
       - name: Install Dependencies
