@@ -23,12 +23,21 @@ jobs:
       - name: Install Dependencies and older GCC
         run: |
           sudo apt-get update
-          # 安装编译依赖以及与旧内核更兼容的 gcc-9
           sudo apt-get install -y git build-essential flex bison libssl-dev libelf-dev libncurses-dev dwarves gcc-9 g++-9
 
       - name: Build Kernel
         run: |
-          # 使用 export 命令，确保 objtool= 的设置能被所有子 make 进程继承
+          # 步骤 1：创建 .config 文件。这是之前被遗漏的关键步骤！
+          cp Microsoft/config-wsl .config
+
+          # 步骤 2：导出环境变量，确保所有子进程都能看到
           export objtool=
-          # 明确指定使用 gcc-9 作为编译器
+
+          # 步骤 3：开始编译，明确指定使用 gcc-9
           make -j$(nproc) CC=gcc-9 bzImage
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wsl2-kernel
+          path: arch/x86/boot/bzImage
