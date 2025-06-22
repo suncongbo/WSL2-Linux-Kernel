@@ -6,21 +6,18 @@ on:
       tag:
         description: 'Branch or tag to build'
         required: true
-        default: 'linux-msft-wsl-5.10.16.3'
+        default: 'linux-msft-5.10.16.3'
 
 jobs:
   build:
     name: Build Kernel
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout from Official Microsoft Repo
+      - name: Checkout from Official Microsoft Repo with Full History
         uses: actions/checkout@v4
         with:
-          # 直接指定从微软的官方仓库 checkout，而不是从你的fork仓库
           repository: 'microsoft/WSL2-Linux-Kernel'
-          # 使用你输入的 tag (例如 'linux-msft-wsl-5.4.72')
           ref: ${{ github.event.inputs.tag }}
-          # 只下载最新的 commit，节省时间
           fetch-depth: 0
 
       - name: Install Dependencies
@@ -30,8 +27,9 @@ jobs:
 
       - name: Build Kernel
         run: |
-          cp /proc/config.gz .
-          gunzip config.gz
+          # 不再从运行环境中复制配置，而是使用源代码中微软官方提供的WSL默认配置
+          cp Microsoft/config-wsl .config
+          # 直接开始编译
           make -j$(nproc) bzImage
 
       - name: Upload Artifact
