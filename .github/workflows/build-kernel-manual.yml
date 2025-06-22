@@ -1,4 +1,4 @@
-name: Build WSL2 Kernel Manually
+name: Build WSL2 Kernel Manually with Cache
 
 on:
   workflow_dispatch:
@@ -13,31 +13,34 @@ jobs:
     name: Build Kernel
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout from Official Microsoft Repo with Full History
+      - name: Cache or Checkout Source Code
         uses: actions/checkout@v4
         with:
           repository: 'microsoft/WSL2-Linux-Kernel'
           ref: ${{ github.event.inputs.tag }}
           fetch-depth: 0
-
+          path: 'WSL2-Linux-Kernel'
+          # 使用缓存来加速后续运行
+          cache: 'github'
+          
       - name: Install Dependencies and older GCC
         run: |
           sudo apt-get update
           sudo apt-get install -y git build-essential flex bison libssl-dev libelf-dev libncurses-dev dwarves gcc-9 g++-9
 
       - name: Build Kernel
+        # 将所有操作都放在源代码目录中
+        working-directory: ./WSL2-Linux-Kernel
         run: |
-          # 步骤 1：创建 .config 文件。这是之前被遗漏的关键步骤！
+          # 步骤 1：创建配置文件
           cp Microsoft/config-wsl .config
-
-          # 步骤 2：导出环境变量，确保所有子进程都能看到
-          export objtool=
-
-          # 步骤 3：开始编译，明确指定使用 gcc-9
-          make -j$(nproc) CC=gcc-9 bzImage
+          
+          # 步骤 2：用最强力的方式运行make
+          # 将环境变量直接注入到 make 命令的执行环境中
+          objtool= CC=gcc-9 make -j$(nproc) bzImage
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: wsl2-kernel
-          path: arch/x86/boot/bzImage
+          path: WSL2-Linux-Kernel/arch/x86/boot/bzImage
