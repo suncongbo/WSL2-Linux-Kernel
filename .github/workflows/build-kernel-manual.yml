@@ -21,7 +21,7 @@ jobs:
           # 使用你输入的 tag (例如 'linux-msft-wsl-5.4.72')
           ref: ${{ github.event.inputs.tag }}
           # 只下载最新的 commit，节省时间
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Install Dependencies
         run: |
