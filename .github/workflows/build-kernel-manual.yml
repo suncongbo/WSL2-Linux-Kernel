@@ -27,10 +27,11 @@ jobs:
 
       - name: Build Kernel
         run: |
-          # 不再从运行环境中复制配置，而是使用源代码中微软官方提供的WSL默认配置
+          # 使用源代码中微软官方提供的WSL默认配置
           cp Microsoft/config-wsl .config
-          # 直接开始编译
-          make -j$(nproc) bzImage
+          # 添加 objtool= 来禁用与新版binutils不兼容的objtool验证
+          # 添加 MAKEFLAGS="-w" 来抑制警告
+          make -j$(nproc) MAKEFLAGS="-w" objtool= bzImage
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
