@@ -1,0 +1,37 @@
+name: Build WSL2 Kernel Manually
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Branch or tag to build'
+        required: true
+        default: 'linux-msft-wsl-5.10.16.3'
+
+jobs:
+  build:
+    name: Build Kernel
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.tag }}
+          fetch-depth: 1
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git build-essential flex bison libssl-dev libelf-dev libncurses-dev dwarves
+
+      - name: Build Kernel
+        run: |
+          cp /proc/config.gz .
+          gunzip config.gz
+          make -j$(nproc) bzImage
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: wsl2-kernel
+          path: arch/x86/boot/bzImage
