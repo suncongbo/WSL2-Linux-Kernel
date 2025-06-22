@@ -6,7 +6,7 @@ on:
       tag:
         description: 'Branch or tag to build'
         required: true
-        default: 'linux-msft-5.10.16.3'
+        default: 'linux-msft-4.19.128'
 
 jobs:
   build:
@@ -20,21 +20,15 @@ jobs:
           ref: ${{ github.event.inputs.tag }}
           fetch-depth: 0
 
-      - name: Install Dependencies
+      - name: Install Dependencies and older GCC
         run: |
           sudo apt-get update
-          sudo apt-get install -y git build-essential flex bison libssl-dev libelf-dev libncurses-dev dwarves
+          # 安装编译依赖以及与旧内核更兼容的 gcc-9
+          sudo apt-get install -y git build-essential flex bison libssl-dev libelf-dev libncurses-dev dwarves gcc-9 g++-9
 
       - name: Build Kernel
         run: |
-          # 使用源代码中微软官方提供的WSL默认配置
-          cp Microsoft/config-wsl .config
-          # 添加 objtool= 来禁用与新版binutils不兼容的objtool验证
-          # 添加 MAKEFLAGS="-w" 来抑制警告
-          make -j$(nproc) MAKEFLAGS="-w" objtool= bzImage
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: wsl2-kernel
-          path: arch/x86/boot/bzImage
+          # 使用 export 命令，确保 objtool= 的设置能被所有子 make 进程继承
+          export objtool=
+          # 明确指定使用 gcc-9 作为编译器
+          make -j$(nproc) CC=gcc-9 bzImage
